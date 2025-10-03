@@ -15,7 +15,7 @@ public class DashboardView {
     public void show(Stage stage, String username, ObservableList<Project> projects) {
         Label welcome = new Label("Welcome, " + username + "!");
 
-        // สร้าง TableView
+        //  TableView
         TableView<Project> table = new TableView<>();
 
         TableColumn<Project, String> cTitle = new TableColumn<>("Title");
@@ -27,7 +27,7 @@ public class DashboardView {
         cDesc.setPrefWidth(300);
 
         table.getColumns().addAll(cTitle, cDesc);
-        table.setItems(projects);  // projects จาก controller
+        table.setItems(projects);  // projects from controller
 
         VBox layout = new VBox(12, welcome, table);
         layout.setPadding(new Insets(20));

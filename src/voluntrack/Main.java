@@ -28,7 +28,7 @@ public class Main extends Application {
 
         showLogin();    // Lunch Login
         stage.show();
-    }
+    } //
 
     /* =================== LOGIN =================== */
     private void showLogin() {
@@ -45,13 +45,13 @@ public class Main extends Application {
 
         btnLogin.setOnAction(e -> {
             if (controller.login(username.getText(), password.getText())) {
-                showDashboard(username.getText());  // ไป Dashboard เมื่อ login สำเร็จ
+                showDashboard(username.getText());  //  go dashboard if login done
             } else {
                 new Alert(Alert.AlertType.ERROR, "Invalid username/password").showAndWait();
             }
         });
 
-        btnSignup.setOnAction(e -> showSignup());   // ไปหน้าสมัคร
+        btnSignup.setOnAction(e -> showSignup());   // go to signup page
 
         VBox box = new VBox(12, title, username, password, btnLogin, btnSignup);
         box.setPadding(new Insets(16));
@@ -71,7 +71,7 @@ public class Main extends Application {
         Button btnBack   = new Button("Back");
 
         btnCreate.setOnAction(e -> {
-            // Milestone: assume valid input (ไม่ต้อง validate)
+
             controller.addUser(new User(
                     fullName.getText(), username.getText(), email.getText(), password.getText()));
             new Alert(Alert.AlertType.INFORMATION, "Account created! Please login.").showAndWait();
@@ -100,7 +100,7 @@ public class Main extends Application {
         cDesc.setPrefWidth(360);
 
         table.getColumns().addAll(cTitle, cDesc);
-        table.setItems(controller.getProjects());   // ข้อมูลจาก CSV
+        table.setItems(controller.getProjects());   //  CSV
 
         Button logout = new Button("Logout");
         logout.setOnAction(e -> showLogin());

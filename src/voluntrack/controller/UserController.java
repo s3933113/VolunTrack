@@ -11,10 +11,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public class UserController {
-    // Users เก็บชั่วคราว (milestone ยังไม่ใช้ DB)
+    // Users collection temporary
     private final ObservableList<User> users = FXCollections.observableArrayList();
 
-    // Projects สำหรับโชว์บน Dashboard (ผูกกับ TableView)
+    // Projects to show on Dashboard (bond with TableView)
     private final ObservableList<Project> projects = FXCollections.observableArrayList();
 
     // ---------- User ops ----------
@@ -32,10 +32,7 @@ public class UserController {
         return projects;
     }
 
-    /**
-     * โหลดไฟล์ CSV รูปแบบ: title,description
-     * วางไฟล์ไว้ที่รากโปรเจกต์ เช่น "projects.csv"
-     */
+   // Load PDF
     public void loadProjectsFromCsv(String csvPath) {
         projects.clear();
         try (BufferedReader br = new BufferedReader(
@@ -47,14 +44,14 @@ public class UserController {
                 line = line.trim();
                 if (line.isEmpty()) continue;
 
-                // ข้าม header ถ้ามี
+                // Skip Header
                 if (first && line.toLowerCase().startsWith("title,")) {
                     first = false;
                     continue;
                 }
                 first = false;
 
-                // split แค่ 2 ช่อง (กัน description มี comma ภายใน)
+                // split 2 channal
                 String[] parts = line.split(",", 2);
                 String title = parts.length > 0 ? parts[0].trim() : "";
                 String desc  = parts.length > 1 ? parts[1].trim() : "";
@@ -62,7 +59,7 @@ public class UserController {
                 projects.add(new Project(title, desc));
             }
         } catch (IOException e) {
-            e.printStackTrace(); // milestone: แสดง stacktrace พอ
+            e.printStackTrace();
         }
     }
 }
