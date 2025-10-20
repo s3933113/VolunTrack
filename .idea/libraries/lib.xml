@@ -2,6 +2,8 @@
   <library name="lib">
     <CLASSES>
       <root url="file://$PROJECT_DIR$/../../../JavaFxGui/openjfx-21.0.8_windows-x64_bin-sdk/javafx-sdk-21.0.8/lib" />
+      <root url="jar://$PROJECT_DIR$/src/libs/sqlite-jdbc-3.45.3.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/libs/slf4j-simple-2.0.12.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
