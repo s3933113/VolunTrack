@@ -5,8 +5,13 @@ import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import voluntrack.db.DatabaseManager;
 import voluntrack.db.SeedData;
-import voluntrack.service.*;
+import voluntrack.service.AuthService;
+import voluntrack.service.CartService;
+import voluntrack.service.ProjectService;
+import voluntrack.service.RegistrationService;
+import voluntrack.view.ChangePasswordView;
 import voluntrack.view.DashboardView;
+import voluntrack.view.HistoryView;
 import voluntrack.view.LoginView;
 import voluntrack.view.SignupView;
 
@@ -16,10 +21,10 @@ public class Main extends Application {
     private Stage stage;
 
     // Services
-    private final AuthService authService = new AuthService();
-    private final ProjectService projectService = new ProjectService();
-    private final CartService cartService = new CartService();
-    private final RegistrationService registrationService = new RegistrationService();
+    private AuthService authService;
+    private ProjectService projectService;
+    private CartService cartService;
+    private RegistrationService registrationService;
 
     // Views
     private LoginView loginView;
@@ -31,19 +36,28 @@ public class Main extends Application {
         this.stage = stage;
         stage.setTitle("VolunTrack");
 
-        // DB init
         try {
             DatabaseManager db = DatabaseManager.getInstance();
             db.connect("data/voluntrack.db");
-            try (InputStream in = getClass().getResourceAsStream("resources/sql/schema.sql")) {
+
+            try (InputStream in = getClass().getResourceAsStream("/sql/schema.sql")) {
+                if (in == null) throw new IllegalStateException("schema.sql not found at /sql/schema.sql");
                 db.initSchema(in);
             }
+
             SeedData.run("data/projects.csv");
         } catch (Exception ex) {
             new Alert(Alert.AlertType.ERROR, "Database initialisation failed: " + ex.getMessage()).showAndWait();
+            return;
         }
 
-        // Init views
+        // init services after DB is ready
+        authService = new AuthService();
+        projectService = new ProjectService();
+        cartService = new CartService();
+        registrationService = new RegistrationService();
+
+        // init views after services
         loginView = new LoginView(authService);
         signupView = new SignupView(authService);
         dashboardView = new DashboardView(projectService, cartService, registrationService);
@@ -58,9 +72,7 @@ public class Main extends Application {
                 this::showSignup,
                 (username, role) -> {
                     if ("admin".equals(role)) {
-                        // Admin dashboard view not implemented yet
                         new Alert(Alert.AlertType.INFORMATION, "Admin dashboard is coming next.").showAndWait();
-                        // TODO: showAdminDashboard(username);
                     } else {
                         showUserDashboard(username);
                     }
@@ -77,10 +89,18 @@ public class Main extends Application {
                 stage,
                 username,
                 this::showLogin,
-                () -> new Alert(Alert.AlertType.INFORMATION, "Change password view coming next.").showAndWait(),
-                () -> new Alert(Alert.AlertType.INFORMATION, "History view coming next.").showAndWait()
+                () -> {
+                    ChangePasswordView view = new ChangePasswordView(authService);
+                    view.show(stage, username, () -> showUserDashboard(username));
+                },
+                () -> {
+                    HistoryView hv = new HistoryView();
+                    hv.show(stage, username, () -> showUserDashboard(username));
+                }
         );
     }
 
     public static void main(String[] args) { launch(args); }
+
+
 }

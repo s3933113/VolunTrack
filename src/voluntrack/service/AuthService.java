@@ -35,13 +35,27 @@ public class AuthService {
     }
 
     // เปลี่ยนรหัสผ่าน
-    public String changePassword(String username, String oldPassword, String newPassword) {
-        String hash = repo.findPasswordHash(username);
-        if (hash == null) return "User not found.";
-        if (!PasswordHasher.verify(oldPassword, hash)) return "Old password incorrect.";
-        if (!isPasswordStrong(newPassword)) return "New password is too weak.";
-        boolean ok = repo.updatePasswordByUsername(username, PasswordHasher.hash(newPassword));
-        return ok ? "SUCCESS" : "Failed to update password.";
+    public String changePassword(String username, String oldPassword, String newPassword, String confirm) {
+        if (username == null || username.isBlank()) return "Invalid user";
+        if (oldPassword == null || newPassword == null || confirm == null) return "Fill all fields";
+        if (!newPassword.equals(confirm)) return "Passwords do not match";
+
+        var userRepo = new voluntrack.repository.UserRepository();
+        String currentHash = userRepo.findPasswordHash(username);
+        if (currentHash == null) return "User not found";
+
+        if (!voluntrack.util.PasswordHasher.verify(oldPassword, currentHash)) {
+            return "Old password is incorrect";
+        }
+
+// ใช้ policy ที่คุณมีอยู่แล้ว
+        if (!isPasswordStrong(newPassword)) return "Password too weak";
+
+        String newHash = voluntrack.util.PasswordHasher.hash(newPassword);
+        boolean ok = userRepo.updatePasswordHash(username, newHash);
+        return ok ? "SUCCESS" : "Update failed";
+
+
     }
 
     // ตรวจความแข็งแรงของรหัสผ่าน

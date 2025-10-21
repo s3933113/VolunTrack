@@ -43,14 +43,14 @@ public class UserRepository {
         }
     }
 
-    public boolean updatePasswordByUsername(String username, String newHash) {
+    public boolean updatePasswordHash(String username, String newHash) {
         String sql = "UPDATE users SET password_hash = ? WHERE username = ?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, newHash);
             ps.setString(2, username);
             return ps.executeUpdate() == 1;
         } catch (SQLException e) {
-            throw new RuntimeException("updatePasswordByUsername failed", e);
+            throw new RuntimeException("updatePasswordHash failed", e);
         }
     }
 
@@ -89,4 +89,6 @@ public class UserRepository {
             throw new RuntimeException("findUserId failed", e);
         }
     }
+
+
 }

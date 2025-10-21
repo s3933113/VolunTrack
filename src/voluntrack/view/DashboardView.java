@@ -159,7 +159,7 @@ public class DashboardView {
         root.setTop(top);
         root.setCenter(center);
 
-        Scene scene = new Scene(root, 900, 700);
+        Scene scene = new Scene(root, 900, 950);
         stage.setTitle("Dashboard");
         stage.setScene(scene);
         stage.show();

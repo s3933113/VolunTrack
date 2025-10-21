@@ -7,12 +7,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * SQLite connection manager (Singleton).
- */
 public final class DatabaseManager {
     private static volatile DatabaseManager instance;
     private Connection connection;
+    private String dbPath;
 
     private DatabaseManager() {}
 
@@ -26,29 +24,17 @@ public final class DatabaseManager {
     }
 
     public synchronized void connect(String dbPath) {
-        if (this.connection != null) return; // already connected
-        try {
-            // ensure folders exist
-            new java.io.File("data/exports").mkdirs();
-
-            // ensure driver registered
-            try { Class.forName("org.sqlite.JDBC"); } catch (ClassNotFoundException ignored) {}
-
-            String url = "jdbc:sqlite:" + dbPath;
-            this.connection = DriverManager.getConnection(url);
-
-            try (Statement st = this.connection.createStatement()) {
-                st.execute("PRAGMA foreign_keys = ON");
-                st.execute("PRAGMA journal_mode = WAL");
-                st.execute("PRAGMA synchronous = NORMAL");
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("DB connect failed: " + e.getMessage(), e);
-        }
+        this.dbPath = dbPath;
+        // folders
+        new java.io.File("data/exports").mkdirs();
+        // driver
+        try { Class.forName("org.sqlite.JDBC"); } catch (ClassNotFoundException ignored) {}
+        // open if not open
+        ensureOpen();
     }
 
     public Connection getConnection() {
-        if (this.connection == null) throw new IllegalStateException("DB not connected");
+        ensureOpen();
         return this.connection;
     }
 
@@ -70,4 +56,22 @@ public final class DatabaseManager {
             this.connection = null;
         }
     }
+
+    private synchronized void ensureOpen() {
+        try {
+            if (this.connection == null || this.connection.isClosed()) {
+                String url = "jdbc:sqlite:" + this.dbPath;
+                this.connection = DriverManager.getConnection(url);
+                try (Statement st = this.connection.createStatement()) {
+                    st.execute("PRAGMA foreign_keys = ON");
+                    st.execute("PRAGMA journal_mode = WAL");
+                    st.execute("PRAGMA synchronous = NORMAL");
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("DB open failed: " + e.getMessage(), e);
+        }
+    }
+
+
 }
