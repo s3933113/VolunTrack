@@ -38,7 +38,7 @@ public class Main extends Application {
             try (InputStream in = getClass().getResourceAsStream("resources/sql/schema.sql")) {
                 db.initSchema(in);
             }
-            SeedData.run("projects.csv");
+            SeedData.run("data/projects.csv");
         } catch (Exception ex) {
             new Alert(Alert.AlertType.ERROR, "Database initialisation failed: " + ex.getMessage()).showAndWait();
         }
