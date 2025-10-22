@@ -42,23 +42,7 @@ GUI	JavaFX 21
 Database	SQLite 3
 Logging	SLF4J
 Testing	JUnit 5
-Directory Structure
-VolunTrack/
- ├── src/
- │   ├── voluntrack/
- │   │   ├── model/             # Data models
- │   │   ├── repository/        # Database operations
- │   │   ├── service/           # Business logic
- │   │   ├── view/              # JavaFX views (UI)
- │   │   ├── db/                # Database setup and seed data
- │   │   └── Main.java          # Application entry point
- │
- ├── data/
- │   ├── voluntrack.db          # SQLite database
- │   └── projects.csv           # Seed data
- │
- ├── libs/                      # External libraries
- └── test/                      # JUnit tests
+
 
 How to Run
 
