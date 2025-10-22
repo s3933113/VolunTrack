@@ -13,7 +13,7 @@ public class Project {
     private final boolean enabled;
     private final String createdAt;
 
-    // ตัวเต็ม 9 พารามิเตอร์ (ใช้โดยฝั่ง service/repo)
+    // Full 9 parameters (service/repo side)
     public Project(int id,
                    String title,
                    String location,
@@ -34,7 +34,7 @@ public class Project {
         this.createdAt = createdAt != null ? createdAt : TimeUtil.nowIso();
     }
 
-    // ตัวช่วยเวลา create ใหม่โดยไม่รู้ id/createdAt
+
     public Project(String title,
                    String location,
                    String day,

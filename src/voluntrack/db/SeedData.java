@@ -60,7 +60,7 @@ public final class SeedData {
             return;
         }
 
-// 1) ไฟล์บนดิสก์
+// 1) files on disk
         if (csvPathIfAny != null && !csvPathIfAny.isBlank()) {
             File f = new File(csvPathIfAny);
             if (f.exists() && f.isFile()) {
@@ -92,7 +92,7 @@ public final class SeedData {
             System.out.println("[Seed] classpath import failed: " + e.getMessage());
         }
 
-// 3) fallback ค่าเริ่มต้น
+// 3) fallback initial
         try (PreparedStatement ps = conn.prepareStatement(
                 "INSERT INTO projects(title,location,day,hourly_value,total_slots,registered_slots,enabled,created_at) " +
                         "VALUES(?,?,?,?,?,?,?,?)")) {
