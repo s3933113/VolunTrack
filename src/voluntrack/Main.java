@@ -9,6 +9,7 @@ import voluntrack.service.AuthService;
 import voluntrack.service.CartService;
 import voluntrack.service.ProjectService;
 import voluntrack.service.RegistrationService;
+import voluntrack.view.AdminDashboardView;
 import voluntrack.view.ChangePasswordView;
 import voluntrack.view.DashboardView;
 import voluntrack.view.HistoryView;
@@ -51,13 +52,11 @@ public class Main extends Application {
             return;
         }
 
-        // init services after DB is ready
         authService = new AuthService();
         projectService = new ProjectService();
         cartService = new CartService();
         registrationService = new RegistrationService();
 
-        // init views after services
         loginView = new LoginView(authService);
         signupView = new SignupView(authService);
         dashboardView = new DashboardView(projectService, cartService, registrationService);
@@ -72,7 +71,7 @@ public class Main extends Application {
                 this::showSignup,
                 (username, role) -> {
                     if ("admin".equals(role)) {
-                        new Alert(Alert.AlertType.INFORMATION, "Admin dashboard is coming next.").showAndWait();
+                        showAdminDashboard(username);
                     } else {
                         showUserDashboard(username);
                     }
@@ -98,6 +97,11 @@ public class Main extends Application {
                     hv.show(stage, username, () -> showUserDashboard(username));
                 }
         );
+    }
+
+    private void showAdminDashboard(String username) {
+        AdminDashboardView v = new AdminDashboardView(projectService);
+        v.show(stage, username, this::showLogin);
     }
 
     public static void main(String[] args) { launch(args); }

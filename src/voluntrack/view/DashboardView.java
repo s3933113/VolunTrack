@@ -17,9 +17,6 @@ import voluntrack.service.CartService;
 import voluntrack.service.ProjectService;
 import voluntrack.service.RegistrationService;
 
-/**
- * User dashboard: list projects, manage cart, confirm registration, export history, change password, logout.
- */
 public class DashboardView {
 
     private final ProjectService projectService;
@@ -38,7 +35,7 @@ public class DashboardView {
                      Runnable onLogout,
                      Runnable onChangePassword,
                      Runnable onViewHistory) {
-        // Top bar
+
         Label welcome = new Label("Welcome, " + username + "!");
         Button btnHistory = new Button("History");
         Button btnChangePwd = new Button("Change Password");
@@ -50,7 +47,6 @@ public class DashboardView {
         top.setAlignment(Pos.CENTER_LEFT);
         top.setPadding(new Insets(10));
 
-        // Projects table
         TableView<Project> tblProjects = new TableView<>();
         TableColumn<Project, String> cTitle = new TableColumn<>("Title");
         cTitle.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getTitle()));
@@ -61,17 +57,16 @@ public class DashboardView {
         TableColumn<Project, Number> cHourly = new TableColumn<>("$/h");
         cHourly.setCellValueFactory(d -> new SimpleIntegerProperty(d.getValue().getHourlyValue()));
         TableColumn<Project, Number> cAvail = new TableColumn<>("Avail");
-        cAvail.setCellValueFactory(d -> new SimpleIntegerProperty(d.getValue().getAvailableSlots()));
+        cAvail.setCellValueFactory(d ->
+                new SimpleIntegerProperty(d.getValue().getTotalSlots() - d.getValue().getRegisteredSlots()));
         TableColumn<Project, Number> cTotal = new TableColumn<>("Total");
         cTotal.setCellValueFactory(d -> new SimpleIntegerProperty(d.getValue().getTotalSlots()));
         tblProjects.getColumns().addAll(cTitle, cLocation, cDay, cHourly, cAvail, cTotal);
         tblProjects.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
-        // Load projects
         ObservableList<Project> data = projectService.getAllForUser();
         tblProjects.setItems(data);
 
-        // Cart table (declare BEFORE handlers that reference it)
         TableView<CartService.CartItem> tblCart = new TableView<>(cartService.getItems());
         TableColumn<CartService.CartItem, String> ciTitle = new TableColumn<>("Project");
         ciTitle.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getTitle()));
@@ -86,10 +81,8 @@ public class DashboardView {
         tblCart.getColumns().addAll(ciTitle, ciSlots, ciHours, ciHourly, ciTotal);
         tblCart.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
-        // Totals label (declare BEFORE handlers that reference it)
         Label lblTotal = new Label("Total: $0");
 
-        // Add to cart controls
         Spinner<Integer> spSlots = new Spinner<>(1, CartService.MAX_SLOTS_PER_PROJECT, 1);
         Spinner<Integer> spHours = new Spinner<>(CartService.MIN_HOURS, CartService.MAX_HOURS, 1);
         Button btnAdd = new Button("Add to cart");
@@ -99,10 +92,13 @@ public class DashboardView {
             if (p == null) { addMsg.setText("Select a project first."); return; }
             int slots = spSlots.getValue();
             int hours = spHours.getValue();
-            if (slots > p.getAvailableSlots()) {
+
+            int avail = p.getTotalSlots() - p.getRegisteredSlots();
+            if (slots > avail) {
                 addMsg.setText("Not enough slots.");
                 return;
             }
+
             String res = cartService.addOrUpdate(p.getId(), p.getTitle(), p.getHourlyValue(), slots, hours);
             if ("SUCCESS".equals(res)) {
                 addMsg.setText("Added.");
@@ -114,7 +110,8 @@ public class DashboardView {
         });
 
         GridPane addPane = new GridPane();
-        addPane.setHgap(8); addPane.setVgap(6);
+        addPane.setHgap(8);
+        addPane.setVgap(6);
         addPane.addRow(0, new Label("Slots"), spSlots, new Label("Hours/slot"), spHours, btnAdd, addMsg);
 
         Button btnRemove = new Button("Remove selected");
@@ -127,7 +124,6 @@ public class DashboardView {
             }
         });
 
-        // Confirm section
         TextField tfCode = new TextField();
         tfCode.setPromptText("6-digit code");
         Button btnConfirm = new Button("Confirm registration");
@@ -139,7 +135,6 @@ public class DashboardView {
                 confirmMsg.setText("Registered successfully.");
                 tfCode.clear();
                 updateTotals(lblTotal);
-                // refresh project list since slots changed
                 tblProjects.setItems(projectService.getAllForUser());
             } else {
                 confirmMsg.setText(res);
@@ -170,4 +165,6 @@ public class DashboardView {
     private void updateTotals(Label lblTotal) {
         lblTotal.setText("Total: $" + cartService.totalContribution());
     }
+
+
 }

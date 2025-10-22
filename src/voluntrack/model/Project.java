@@ -1,16 +1,19 @@
 package voluntrack.model;
 
+import voluntrack.util.TimeUtil;
+
 public class Project {
     private final int id;
     private final String title;
     private final String location;
-    private final String day;              // Mon..Sun
-    private final int hourlyValue;         // AUD per hour
-    private final int totalSlots;          // total available
-    private final int registeredSlots;     // already taken
-    private final boolean enabled;         // visible to users
-    private final String createdAt;        // ISO string
+    private final String day;
+    private final int hourlyValue;
+    private final int totalSlots;
+    private final int registeredSlots;
+    private final boolean enabled;
+    private final String createdAt;
 
+    // ตัวเต็ม 9 พารามิเตอร์ (ใช้โดยฝั่ง service/repo)
     public Project(int id,
                    String title,
                    String location,
@@ -28,7 +31,16 @@ public class Project {
         this.totalSlots = totalSlots;
         this.registeredSlots = registeredSlots;
         this.enabled = enabled;
-        this.createdAt = createdAt;
+        this.createdAt = createdAt != null ? createdAt : TimeUtil.nowIso();
+    }
+
+    // ตัวช่วยเวลา create ใหม่โดยไม่รู้ id/createdAt
+    public Project(String title,
+                   String location,
+                   String day,
+                   int hourlyValue,
+                   int totalSlots) {
+        this(0, title, location, day, hourlyValue, totalSlots, 0, true, TimeUtil.nowIso());
     }
 
     public int getId() { return id; }
@@ -40,13 +52,4 @@ public class Project {
     public int getRegisteredSlots() { return registeredSlots; }
     public boolean isEnabled() { return enabled; }
     public String getCreatedAt() { return createdAt; }
-
-    // Derived helpers
-    public int getAvailableSlots() { return Math.max(0, totalSlots - registeredSlots); }
-
-    // Backward compatibility for old UI that expected description
-    public String getDescription() {
-        return String.format("%s • %s • $%d/h • %d/%d slots",
-                location, day, hourlyValue, getAvailableSlots(), totalSlots);
-    }
 }

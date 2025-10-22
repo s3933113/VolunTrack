@@ -15,37 +15,38 @@ public class ProjectRepository {
         return DatabaseManager.getInstance().getConnection();
     }
 
-    // ดึงโครงการทั้งหมดที่เปิดให้ผู้ใช้เห็น (enabled = 1)
+    // ผู้ใช้ทั่วไป เห็นเฉพาะ enabled
     public ObservableList<Project> findAllEnabled() {
         ObservableList<Project> list = FXCollections.observableArrayList();
-        String sql = "SELECT id, title, location, day, hourly_value, total_slots, registered_slots, enabled, created_at FROM projects WHERE enabled = 1 ORDER BY title";
-        try (PreparedStatement ps = conn().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                list.add(mapRow(rs));
-            }
+        String sql = "SELECT id, title, location, day, hourly_value, total_slots, registered_slots, enabled, created_at " +
+                "FROM projects WHERE enabled = 1 ORDER BY title";
+        try (PreparedStatement ps = conn().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) list.add(mapRow(rs));
         } catch (SQLException e) {
             throw new RuntimeException("findAllEnabled failed", e);
         }
         return list;
     }
 
-    // ดึงทุกโปรเจกต์สำหรับ admin
+    // แอดมิน เห็นทั้งหมด
     public ObservableList<Project> findAllForAdmin() {
         ObservableList<Project> list = FXCollections.observableArrayList();
-        String sql = "SELECT id, title, location, day, hourly_value, total_slots, registered_slots, enabled, created_at FROM projects ORDER BY title";
-        try (PreparedStatement ps = conn().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                list.add(mapRow(rs));
-            }
+        String sql = "SELECT id, title, location, day, hourly_value, total_slots, registered_slots, enabled, created_at " +
+                "FROM projects ORDER BY title";
+        try (PreparedStatement ps = conn().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) list.add(mapRow(rs));
         } catch (SQLException e) {
             throw new RuntimeException("findAllForAdmin failed", e);
         }
         return list;
     }
 
-    // เพิ่มโปรเจกต์ใหม่
+    // สร้างโปรเจกต์ใหม่
     public boolean insert(Project p) {
-        String sql = "INSERT INTO projects(title, location, day, hourly_value, total_slots, registered_slots, enabled, created_at) VALUES(?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO projects(title, location, day, hourly_value, total_slots, registered_slots, enabled, created_at) " +
+                "VALUES(?,?,?,?,?,?,?,?)";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, p.getTitle());
             ps.setString(2, p.getLocation());
@@ -54,14 +55,14 @@ public class ProjectRepository {
             ps.setInt(5, p.getTotalSlots());
             ps.setInt(6, p.getRegisteredSlots());
             ps.setInt(7, p.isEnabled() ? 1 : 0);
-            ps.setString(8, TimeUtil.nowIso());
+            ps.setString(8, p.getCreatedAt() == null ? TimeUtil.nowIso() : p.getCreatedAt());
             return ps.executeUpdate() == 1;
         } catch (SQLException e) {
             throw new RuntimeException("insert project failed", e);
         }
     }
 
-    // ปรับสถานะเปิด/ปิดโปรเจกต์
+    // ปรับสถานะเปิดปิด
     public boolean setEnabled(int id, boolean enabled) {
         String sql = "UPDATE projects SET enabled = ? WHERE id = ?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
@@ -73,9 +74,11 @@ public class ProjectRepository {
         }
     }
 
-    // อัปเดตจำนวนผู้เข้าร่วม (เพิ่มหรือลด slot ที่ถูกใช้)
+    // ปรับจำนวนที่ลงทะเบียนแล้วแบบปลอดภัย
     public boolean updateRegisteredSlots(int id, int delta) {
-        String sql = "UPDATE projects SET registered_slots = registered_slots + ? WHERE id = ? AND registered_slots + ? BETWEEN 0 AND total_slots";
+        String sql = "UPDATE projects " +
+                "SET registered_slots = registered_slots + ? " +
+                "WHERE id = ? AND (registered_slots + ?) BETWEEN 0 AND total_slots";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setInt(1, delta);
             ps.setInt(2, id);
@@ -86,7 +89,7 @@ public class ProjectRepository {
         }
     }
 
-    // อัปเดตข้อมูลโปรเจกต์
+    // แก้ไขข้อมูลหลัก
     public boolean update(Project p) {
         String sql = "UPDATE projects SET title=?, location=?, day=?, hourly_value=?, total_slots=?, enabled=? WHERE id=?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
@@ -103,6 +106,29 @@ public class ProjectRepository {
         }
     }
 
+    // ลบโปรเจกต์, ป้องกันลบถ้ามีคนลงทะเบียนแล้ว
+    public boolean delete(int id) {
+        // ปฏิเสธถ้ามี registered_slots > 0
+        String guard = "SELECT registered_slots FROM projects WHERE id = ?";
+        try (PreparedStatement g = conn().prepareStatement(guard)) {
+            g.setInt(1, id);
+            try (ResultSet rs = g.executeQuery()) {
+                if (!rs.next()) return false;
+                if (rs.getInt(1) > 0) return false;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("delete guard failed", e);
+        }
+
+        String sql = "DELETE FROM projects WHERE id = ?";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException("delete project failed", e);
+        }
+    }
+
     private Project mapRow(ResultSet rs) throws SQLException {
         return new Project(
                 rs.getInt("id"),
@@ -116,4 +142,6 @@ public class ProjectRepository {
                 rs.getString("created_at")
         );
     }
+
+
 }
