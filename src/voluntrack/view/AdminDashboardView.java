@@ -13,6 +13,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import voluntrack.model.Project;
 import voluntrack.service.ProjectService;
+import voluntrack.view.AdminRegistrationsView;
+import voluntrack.service.RegistrationService;
 
 public class AdminDashboardView {
 
@@ -61,9 +63,15 @@ public class AdminDashboardView {
 
         Button btnAdd = new Button("Add");
         btnAdd.setOnAction(e -> {
-            Project p = showProjectEditor(null);
-            if (p != null) {
-                boolean ok = projectService.create(p.getTitle(), p.getLocation(), p.getDay(), p.getHourlyValue(), p.getTotalSlots());
+            Project edited = showProjectEditor(null);
+            if (edited != null) {
+                boolean ok = projectService.create(
+                        edited.getTitle(),
+                        edited.getLocation(),
+                        edited.getDay(),
+                        edited.getHourlyValue(),
+                        edited.getTotalSlots()
+                );
                 if (ok) {
                     table.setItems(projectService.getAllForAdmin());
                     new Alert(Alert.AlertType.INFORMATION, "Created").showAndWait();
@@ -79,7 +87,6 @@ public class AdminDashboardView {
             if (sel == null) { new Alert(Alert.AlertType.WARNING, "Select a row").showAndWait(); return; }
             Project edited = showProjectEditor(sel);
             if (edited != null) {
-                // รวมค่าที่แก้กับค่าที่ต้องคงไว้ แล้วส่งออบเจ็กต์ใหม่
                 Project toUpdate = new Project(
                         sel.getId(),
                         edited.getTitle(),
@@ -106,7 +113,8 @@ public class AdminDashboardView {
             Project sel = table.getSelectionModel().getSelectedItem();
             if (sel == null) { new Alert(Alert.AlertType.WARNING, "Select a row").showAndWait(); return; }
             if (sel.getRegisteredSlots() > 0) { new Alert(Alert.AlertType.WARNING, "Has registrations").showAndWait(); return; }
-            if (new Alert(Alert.AlertType.CONFIRMATION, "Delete project " + sel.getTitle() + "?").showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            if (new Alert(Alert.AlertType.CONFIRMATION, "Delete project " + sel.getTitle() + "?")
+                    .showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
                 boolean ok = projectService.delete(sel.getId());
                 if (ok) {
                     table.getItems().remove(sel);
@@ -129,10 +137,17 @@ public class AdminDashboardView {
             }
         });
 
+        // ปุ่มดูประวัติทั้งหมด
+        Button btnAllRegs = new Button("All Registrations");
+        btnAllRegs.setOnAction(e -> {
+            AdminRegistrationsView view = new AdminRegistrationsView(new RegistrationService());
+            view.show(stage, () -> this.show(stage, adminUsername, onBack));
+        });
+
         Button btnBack = new Button("Back");
         btnBack.setOnAction(e -> onBack.run());
 
-        HBox actions = new HBox(10, btnRefresh, btnAdd, btnEdit, btnDelete, btnToggle, new Separator(), btnBack);
+        HBox actions = new HBox(10, btnRefresh, btnAdd, btnEdit, btnDelete, btnToggle, btnAllRegs, new Separator(), btnBack);
         actions.setAlignment(Pos.CENTER_LEFT);
         actions.setPadding(new Insets(8));
 
@@ -143,7 +158,7 @@ public class AdminDashboardView {
         root.setTop(top);
         root.setCenter(table);
 
-        stage.setScene(new Scene(root, 1000, 600));
+        stage.setScene(new Scene(root, 1100, 640));
         stage.setTitle("Admin Dashboard");
         stage.show();
     }
@@ -157,7 +172,7 @@ public class AdminDashboardView {
         ChoiceBox<String> cbDay = new ChoiceBox<>();
         cbDay.getItems().addAll("Mon","Tue","Wed","Thu","Fri","Sat","Sun");
         Spinner<Integer> spHourly = new Spinner<>(1, 100, 20);
-        Spinner<Integer> spTotal = new Spinner<>(1, 100, 10);
+        Spinner<Integer> spTotal  = new Spinner<>(1, 100, 10);
 
         if (original != null) {
             tfTitle.setText(original.getTitle());
@@ -182,13 +197,6 @@ public class AdminDashboardView {
         dialog.getDialogPane().setContent(form);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
-        var okBtn = dialog.getDialogPane().lookupButton(ButtonType.OK);
-        okBtn.disableProperty().bind(
-                tfTitle.textProperty().isEmpty()
-                        .or(tfLocation.textProperty().isEmpty())
-                        .or(cbDay.valueProperty().isNull())
-        );
-
         dialog.setResultConverter(btn -> {
             if (btn == ButtonType.OK) {
                 String title = tfTitle.getText().trim();
@@ -198,7 +206,6 @@ public class AdminDashboardView {
                 int total = spTotal.getValue();
                 if (title.isEmpty() || location.isEmpty() || day == null) return null;
 
-                // คืน Project ที่มีเฉพาะค่าที่แก้ไข ส่วน id, registered, enabled, createdAt จะใส่ตอนอัปเดต
                 return new Project(
                         0, title, location, day, hourly, total,
                         0, true, null

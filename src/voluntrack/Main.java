@@ -31,6 +31,7 @@ public class Main extends Application {
     private LoginView loginView;
     private SignupView signupView;
     private DashboardView dashboardView;
+    private AdminDashboardView adminDashboardView;
 
     @Override
     public void start(Stage stage) {
@@ -52,14 +53,17 @@ public class Main extends Application {
             return;
         }
 
+        // create services after DB is ready
         authService = new AuthService();
         projectService = new ProjectService();
         cartService = new CartService();
         registrationService = new RegistrationService();
 
+        // create views after services
         loginView = new LoginView(authService);
         signupView = new SignupView(authService);
         dashboardView = new DashboardView(projectService, cartService, registrationService);
+        adminDashboardView = new AdminDashboardView(projectService); // IMPORTANT
 
         showLogin();
         stage.show();
@@ -71,7 +75,7 @@ public class Main extends Application {
                 this::showSignup,
                 (username, role) -> {
                     if ("admin".equals(role)) {
-                        showAdminDashboard(username);
+                        adminDashboardView.show(stage, username, this::showLogin);
                     } else {
                         showUserDashboard(username);
                     }
@@ -97,11 +101,6 @@ public class Main extends Application {
                     hv.show(stage, username, () -> showUserDashboard(username));
                 }
         );
-    }
-
-    private void showAdminDashboard(String username) {
-        AdminDashboardView v = new AdminDashboardView(projectService);
-        v.show(stage, username, this::showLogin);
     }
 
     public static void main(String[] args) { launch(args); }

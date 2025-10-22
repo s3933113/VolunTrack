@@ -1,5 +1,6 @@
 package voluntrack.service;
 
+import javafx.collections.ObservableList;
 import voluntrack.db.DatabaseManager;
 import voluntrack.repository.ProjectRepository;
 import voluntrack.repository.RegistrationRepository;
@@ -15,8 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
-
- Handles registration confirmation logic and validations.
+ * Handles registration confirmation logic and validations.
+ * Also exposes admin listing APIs.
  */
 public class RegistrationService {
 
@@ -35,7 +36,7 @@ public class RegistrationService {
         Integer userId = userRepo.findUserId(username);
         if (userId == null) return "User not found.";
 
-        // Validate day and slots for every item before writing
+        // Validate day and slots first
         for (CartService.CartItem item : cart.getItems()) {
             ProjectCore p = fetchProjectCore(item.getProjectId());
             if (p == null || p.enabled == 0) return "Project not available: " + item.getTitle();
@@ -44,7 +45,7 @@ public class RegistrationService {
             if (newRegistered > p.totalSlots) return "Not enough slots for: " + item.getTitle();
         }
 
-        // All validations passed, write changes
+        // Writes
         for (CartService.CartItem item : cart.getItems()) {
             int totalValue = item.getHourlyValue() * item.getHoursPerSlot() * item.getSlots();
             boolean ok1 = regRepo.insert(userId, item.getProjectId(), item.getSlots(), item.getHoursPerSlot(), totalValue);
@@ -54,8 +55,11 @@ public class RegistrationService {
 
         cart.clear();
         return "SUCCESS";
+    }
 
-
+    // Admin: list all registration details
+    public ObservableList<RegistrationRepository.RegDetail> listAllDetailsForAdmin() {
+        return regRepo.findAllDetails();
     }
 
     // 6-digit numeric only
@@ -73,14 +77,11 @@ public class RegistrationService {
         Integer projIdx = idx.get(projectDay);
         if (projIdx == null) return false;
         return projIdx >= todayIdx;
-
-
     }
 
     private int dayIndexOfToday() {
         DayOfWeek dow = LocalDate.now().getDayOfWeek();
-// MONDAY=1..SUNDAY=7 -> 0..6
-        return (dow.getValue() + 6) % 7;
+        return (dow.getValue() + 6) % 7; // MONDAY=1..SUNDAY=7 -> 0..6
     }
 
     // Minimal project info used for validations
@@ -101,7 +102,7 @@ public class RegistrationService {
 
     private ProjectCore fetchProjectCore(int projectId) {
         String sql = "SELECT id, day, total_slots, registered_slots, enabled FROM projects WHERE id = ?";
-        Connection c = DatabaseManager.getInstance().getConnection(); // อย่าใช้ try-with-resources กับ Connection
+        Connection c = DatabaseManager.getInstance().getConnection(); // do not close shared connection
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, projectId);
             try (ResultSet rs = ps.executeQuery()) {
