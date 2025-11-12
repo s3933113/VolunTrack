@@ -52,7 +52,7 @@ public class LoginView {
         VBox layout = new VBox(10, title, tfUser, tfPass, btnLogin, btnSignup, msg);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(20));
-        layout.setPrefSize(400, 260);
+        layout.setPrefSize(400, 360);
 
         Scene scene = new Scene(layout);
         stage.setTitle("Login");

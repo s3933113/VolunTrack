@@ -19,7 +19,7 @@ public class AuthService {
             return "Username already exists.";
         }
         if (!isPasswordStrong(password)) {
-            return "Password must be at least 8 characters and contain uppercase, number, and special character.";
+            return "Password must be at least 8 characters\nand contain uppercase, number, and special character.";
         }
         String hash = PasswordHasher.hash(password);
         boolean ok = repo.insertUser(fullName, username, email, hash, "user");

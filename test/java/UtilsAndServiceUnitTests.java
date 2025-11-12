@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UtilsAndServiceUnitTests {
 
-    // 1) IdUtil.zeroPad4 — จัดรูปเป็น 4 หลัก
+    // 1) Verify that the zeroPad4() function is working correctly.
     @Test
     void zeroPad4_basic() {
         assertEquals("0001", IdUtil.zeroPad4(1));

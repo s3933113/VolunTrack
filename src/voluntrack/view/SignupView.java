@@ -57,7 +57,7 @@ public class SignupView {
         VBox layout = new VBox(10, title, tfFullName, tfUsername, tfEmail, tfPassword, btnCreate, btnBack, msg);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(20));
-        layout.setPrefSize(460, 320);
+        layout.setPrefSize(460, 460);
 
         Scene scene = new Scene(layout);
         stage.setTitle("Sign up");
